@@ -7,6 +7,7 @@ import { supabase } from '../supabaseClient'; // adjust path if needed
 export default function Register() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [username, setUsername] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -16,14 +17,35 @@ export default function Register() {
     setLoading(true);
     setError('');
 
-    const { error } = await supabase.auth.signUp({
+    // Sign up with email and password
+    const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
     });
 
-    if (error) {
-      setError(error.message);
-    } else {
+    if (authError) {
+      setError(authError.message);
+      setLoading(false);
+      return;
+    }
+    
+    if (authData.user) {
+      const { error: profileError } = await supabase.from('profiles').insert([
+        {
+          id: authData.user.id,
+          username: username,
+          current_streak: 0,
+          longest_streak: 0,
+          badge_level: 'bronze',
+        },
+      ]);
+        
+      if (profileError) {
+        setError(profileError.message);
+        setLoading(false);
+        return;
+      }
+      
       alert('Check your email to confirm registration!');
       router.push('/login');
     }
@@ -73,6 +95,18 @@ export default function Register() {
                     type="email"
                     onChange={(e) => {{setEmail(e.target.value)}; setError('');}}
                     
+                    className="bg-white border border-black rounded-lg p-2 w-80"
+                />
+            </div>
+
+            <div className="flex items-center space-x-2 mb-4 max-w-md mx-auto">
+                <label htmlFor="username" className="w-20 text-right text-black">
+                Username:
+                </label>
+                <input
+                    id="username"
+                    type="text"
+                    onChange={(e) => {setUsername(e.target.value); setError('');}}
                     className="bg-white border border-black rounded-lg p-2 w-80"
                 />
             </div>
