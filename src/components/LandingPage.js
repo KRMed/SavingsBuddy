@@ -6,54 +6,7 @@ import Link from "next/link";
 export default function LandingPage() {
     return (
         <div style={{ height: '100vh', backgroundColor: 'white', display: 'flex', flexDirection: 'column' }}>
-      {/* Header */}
-      <header style={{
-        backgroundColor: '#153D66',
-        color: 'white',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '0.5rem 1rem'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          <div style={{
-            width: 40,
-            height: 40,
-            background: 'white',
-            borderRadius: '50%',
-            marginRight: '1rem'
-          }}></div>
-          <nav>
-            <a href="/register" style={{ marginRight: '1rem', color: 'white', textDecoration: 'none', fontWeight: 'bold' }}>DASHBOARD</a>
-            <a href="/leaderboard" style={{ marginRight: '1rem', color: 'white', textDecoration: 'none', fontWeight: 'bold' }}>LEADERBOARD</a>
-          </nav>
-        </div>
-        <div>
-          <a href="/login">
-            <button style={{
-              marginRight: '0.5rem',
-              padding: '0.5rem 1rem',
-              border: 'none',
-              borderRadius: '8px',
-              backgroundColor: '#CC3B2F',
-              color: 'white',
-              fontWeight: 'bold',
-              cursor: 'pointer'
-            }}>Login</button>
-          </a>
-          <a href="/register">
-            <button style={{
-              padding: '0.5rem 1rem',
-              border: 'none',
-              borderRadius: '8px',
-              backgroundColor: '#CC3B2F',
-              color: 'white',
-              fontWeight: 'bold',
-              cursor: 'pointer'
-            }}>Sign Up</button>
-          </a>
-        </div>
-      </header>
+
         <main style={{ marginTop: '75px' }}>
             <div className="flex-1 flex items-center justify-center h-screen">
                 <div className="flex flex-col md:flex-row items-center w-full max-w-7xl px-4 py-4 -mt-65">

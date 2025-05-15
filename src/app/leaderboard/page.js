@@ -48,29 +48,7 @@ export default function LeaderboardPage() {
 
   return (
     <div style={{ height: '100vh', backgroundColor: 'white', display: 'flex', flexDirection: 'column' }}>
-      {/* Header */}
-      <header style={{
-        backgroundColor: '#153d66',
-        color: 'white',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '0.5rem 1rem'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          <div style={{
-            width: 40,
-            height: 40,
-            background: 'white',
-            borderRadius: '50%',
-            marginRight: '1rem'
-          }}></div>
-          <nav>
-            <a href="/register" style={{ marginRight: '1rem', color: 'white', textDecoration: 'none', fontWeight: 'bold' }}>DASHBOARD</a>
-            <a href="/leaderboard" style={{ marginRight: '1rem', color: 'white', textDecoration: 'none', fontWeight: 'bold' }}>LEADERBOARD</a>
-          </nav>
-        </div>
-      </header>
+      
       <main style={{
         flex: 1,
         padding: '2rem',

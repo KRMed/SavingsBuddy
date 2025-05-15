@@ -50,26 +50,6 @@ export default function Login() {
   return (
     // barebones login form, change as needed ** Centered username
     <div style={{ height: '100vh', backgroundColor: 'white', display: 'flex', flexDirection: 'column' }}>
-      {/* Header */}
-      <header style={{
-        backgroundColor: '#153d66',
-        color: 'white',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '0.5rem 1rem'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          <div style={{
-            width: 40,
-            height: 40,
-            background: 'white',
-            borderRadius: '50%',
-            marginRight: '1rem'
-          }}></div>
-        </div>
-      </header>
-
       <main 
       style={{ flexGrow: 1, display: 'flex', justifyContent: 'center', 
         alignItems: 'center', backgroundColor: '#f3f4f6' }}
