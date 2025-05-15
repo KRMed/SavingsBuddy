@@ -1,4 +1,7 @@
+"use client";
+import React from "react";
 import savingsbuddyImage from "../assets/savingsbuddy.png";
+import Link from "next/link";
 
 export default function LandingPage() {
     return (
@@ -15,9 +18,11 @@ export default function LandingPage() {
                     <p className="mb-3 text-base text-gray-700">
                         An interactive and engaging way to budget and save money!
                     </p>
-                    <button className="bg-red-500 text-white px-8 py-3 rounded-md hover:bg-red-600 transition duration-200 shadow">
-                        TRY NOW
-                    </button>
+                    <Link href={"/login"}>
+                        <button className="bg-red-500 text-white px-8 py-3 rounded-md hover:bg-red-600 transition duration-200 shadow">
+                            Try Now!
+                        </button>
+                    </Link>
                 </div>
                 <div className="flex-1 flex justify-center items-center max-w-[50%]">
                     <img
@@ -28,5 +33,5 @@ export default function LandingPage() {
             </div>
         </div>
     </div>
-    );
+);
 }

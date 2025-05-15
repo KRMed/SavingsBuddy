@@ -1,7 +1,7 @@
 const Header = () => {
     return (
         // sample header
-        <div>
+        <div className="header">
             <a href="/login">Login</a>
             <a href="/register">Register</a>
             <a href="/dashboard">Dashboard</a>
