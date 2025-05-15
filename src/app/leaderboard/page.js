@@ -7,19 +7,19 @@ export default function LeaderboardPage() {
 
   useEffect(() => {
     setWorldwide([
-      { name: 'Naame1', streak: 10 },
-      { name: 'Name2', streak: 8 },
-      { name: 'Name3', streak: 7 },
-      { name: 'Name4', streak: 6 },
-      { name: 'Name5', streak: 5 }
+      { name: 'Fanjin', streak: `${200}🔥` },
+      { name: 'Eva', streak: `${95}🔥` },
+      { name: 'Kris', streak: `${76}🔥` },
+      { name: 'Michelle', streak: `${56}🔥` },
+      { name: 'Zahin', streak: `${35}🔥` }
     ]);
 
     setFriends([
-      { name: 'Name1', streak: 12 },
-      { name: 'Name2', streak: 11 },
-      { name: 'Name3', streak: 9 },
-      { name: 'Name4', streak: 7 },
-      { name: 'Name5', streak: 4 }
+      { name: 'Danielle', streak: `${12}🔥` },
+      { name: 'Christina', streak: `${10}🔥` },
+      { name: 'Lucas', streak: `${9}🔥` },
+      { name: 'Angela', streak: `${7}🔥` },
+      { name: 'Matthew', streak: `${4}🔥` }
     ]);
   }, []);
 
@@ -67,31 +67,6 @@ export default function LeaderboardPage() {
             <a href="/register" style={{ marginRight: '1rem', color: 'white', textDecoration: 'none', fontWeight: 'bold' }}>DASHBOARD</a>
             <a href="/leaderboard" style={{ marginRight: '1rem', color: 'white', textDecoration: 'none', fontWeight: 'bold' }}>LEADERBOARD</a>
           </nav>
-        </div>
-        <div>
-          <a href="/login">
-            <button style={{
-              marginRight: '0.5rem',
-              padding: '0.5rem 1rem',
-              border: 'none',
-              borderRadius: '8px',
-              backgroundColor: '#cc3b2f',
-              color: 'white',
-              fontWeight: 'bold',
-              cursor: 'pointer'
-            }}>Login</button>
-          </a>
-          <a href="/register">
-            <button style={{
-              padding: '0.5rem 1rem',
-              border: 'none',
-              borderRadius: '8px',
-              backgroundColor: '#cc3b2f',
-              color: 'white',
-              fontWeight: 'bold',
-              cursor: 'pointer'
-            }}>Sign Up</button>
-          </a>
         </div>
       </header>
       <main style={{
