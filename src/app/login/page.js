@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { supabase } from '../supabaseClient';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -22,7 +23,7 @@ export default function Login() {
     });
 
     if (error) {
-      setError(error.message);
+      setError("Please fill out the required fields");
     } else {
       router.push('/dashboard'); 
     }
@@ -31,25 +32,66 @@ export default function Login() {
   };
 
   return (
-    // barebones login form, change as needed
-    <main>
-      <h1>Login</h1>
-      <form onSubmit={handleLogin}>
-        <input
-          type="email"
-          placeholder="Email"
-          onChange={(e) => setEmail(e.target.value)}
-        /><br />
-        <input
-          type="password"
-          placeholder="Password"
-          onChange={(e) => setPassword(e.target.value)}
-        /><br />
-        <button type="submit" disabled={loading}>
-          {loading ? 'Logging in...' : 'Log In'}
-        </button>
+    // barebones login form, change as needed ** Centered username
+    
+    <main className="min-h-screen flex justify-center items-center bg-gray-100">
+    <div style={{ backgroundColor: '#D9D9D9' }} 
+      className="rounded-lg w-[551px] h-[235px] rounded-lg p-6 flex flex-col justify-center"
+    >
+      <form className="text-black mt-25" onSubmit={handleLogin}>
+        
+        <div className="flex items-center space-x-2 mb-4 max-w-md mx-auto">
+          <label htmlFor="email" className="w-20 text-right text-black">
+          Email:
+          </label>
+          <input
+            id="email"
+            type="email"
+            onChange={(e) => {{setEmail(e.target.value)}; setError('');}}
+            
+            className="bg-white border border-black rounded-lg p-2 w-80"
+          />
+        </div>
+  
+        <div className="flex items-center space-x-2 mb-4 max-w-md mx-auto">
+          <label htmlFor="password" className="w-20 text-right text-black">
+            Password:
+          </label>
+          <input
+            id="password"
+            type="password"
+            onChange={(e) => {setPassword(e.target.value); setError('');}}
+            className="bg-white border border-black rounded-lg p-2 w-80"
+          />
+        </div>
+  
+        {/*The login button*/}
+        <div className="max-w-md mx-auto mb-4">
+          <div className="ml-48">
+          <button
+            type="submit"
+            disabled={loading}
+            style= {{backgroundColor: '#004878'}}
+            className="text-white px-4 py-2 rounded-lg"
+          >
+            {loading ? 'Logging in...' : 'Log In'}
+          </button>
+          </div>
+        </div>
+
+        <div className="flex justify-center mt-2 min-h-[1.5rem]">
+          {error && <p style={{ color: 'black' }}>{error}</p>}
+        </div> 
       </form>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-    </main>
+      <p className="mt-4 text-center max-w-md mx-auto">
+        <a 
+          href="/register" 
+          className="hover:underline text-3xl"
+          style={{ color: '#004878' }}>
+        Don't have an account? Sign up!
+        </a>
+      </p>
+    </div>
+  </main>
   );
 }
