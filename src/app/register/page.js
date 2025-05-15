@@ -3,15 +3,32 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../supabaseClient'; // adjust path if needed
+import { useEffect } from 'react';
 
 export default function Register() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
 
+  // redirect if already logged in
+  useEffect(() => {
+    async function checkLogin() {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (session) {
+        router.push('/dashboard');
+      }else {
+        setLoading(false);
+      }
+    }
+  
+    checkLogin();
+  }, [router]);
+  if (loading) return null;
   const handleRegister = async (e) => {
     e.preventDefault();
     setLoading(true);
