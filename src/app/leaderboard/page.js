@@ -1,29 +1,29 @@
 'use client';
 import React, { useEffect, useState } from 'react';
+import { supabase } from '../supabaseClient';
 
 export default function LeaderboardPage() {
   const [worldwide, setWorldwide] = useState([]);
   const [friends, setFriends] = useState([]);
+  const [loading, setLoading] = useState(true);
+  
 
   useEffect(() => {
-    setWorldwide([
-      { name: 'Fanjin', streak: `${200}🔥` },
-      { name: 'Eva', streak: `${95}🔥` },
-      { name: 'Kris', streak: `${76}🔥` },
-      { name: 'Michelle', streak: `${56}🔥` },
-      { name: 'Zahin', streak: `${35}🔥` }
-    ]);
+    const fetchWorldWideLeaderboard = async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('username, current_streak')
+        .order('current_streak', { ascending: false })
+        .limit(50);
 
-    setFriends([
-      { name: 'Danielle', streak: `${12}🔥` },
-      { name: 'Christina', streak: `${10}🔥` },
-      { name: 'Lucas', streak: `${9}🔥` },
-      { name: 'Angela', streak: `${7}🔥` },
-      { name: 'Matthew', streak: `${4}🔥` }
-    ]);
+      if (!error) setWorldwide(data);
+      setLoading(false);
+    };
+
+    fetchWorldWideLeaderboard();
   }, []);
-
-  const renderEntries = (entries) =>
+  if (loading) return <p>Loading leaderboard...</p>;
+  const renderEntries = (entries, current) =>
     entries.map((entry, index) => (
       <div key={index} style={{
         display: 'flex',
@@ -40,7 +40,9 @@ export default function LeaderboardPage() {
           marginRight: '0.5rem',
           flexShrink: 0
         }}></div>
-        <span style={{ fontWeight: 'bold', color: 'black' }}>{entry.name} / {entry.streak}</span>
+        <span style={{ fontWeight: 'bold', color: 'black' }}>
+          {entry.username} / {current === 0 ? (entry.current_streak || 0) : (entry.longest_streak || 0)} 🔥
+        </span>
       </div>
     ));
 
@@ -73,43 +75,92 @@ export default function LeaderboardPage() {
         flex: 1,
         padding: '2rem',
         display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center'
+        flexDirection: 'column',
+        justifyContent: 'flex-start',
+        alignItems: 'center',
+        gap: '2rem'
       }}>
-        <section style={{ display: 'flex', gap: '2rem' }}>
-          <div style={{
-            border: '1px solid black',
-            borderRadius: '8px',
-            overflow: 'hidden',
-            width: '260px', 
-            backgroundColor: 'white'
-          }}>
+        <h1 style={{ fontSize: "80px" }} className="font-semibold leading-tight text-black">
+          <span className="inline-block pb-1">Leaderboards</span>
+        </h1>
+        
+        <div style={{
+          display: 'flex',
+          flexDirection: 'row',
+          justifyContent: 'center',
+          alignItems: 'center',
+          gap: '3rem',
+          width: '100%'
+        }}>
+          <section style={{ display: 'flex', gap: '3rem' }}>
             <div style={{
-              backgroundColor: '#cc3b2f',
-              color: 'white',
-              fontWeight: 'bold',
-              textAlign: 'center',
-              padding: '0.5rem'
-            }}>WORLDWIDE</div>
-            {renderEntries(worldwide)}
-          </div>
-          <div style={{
-            border: '1px solid black',
-            borderRadius: '8px',
-            overflow: 'hidden',
-            width: '260px',
-            backgroundColor: 'white'
-          }}>
+              border: '1px solid black',
+              borderRadius: '8px',
+              overflow: 'hidden',
+              width: '260px', 
+              backgroundColor: 'white'
+            }}>
+              <div style={{
+                backgroundColor: '#cc3b2f',
+                color: 'white',
+                fontWeight: 'bold',
+                textAlign: 'center',
+                padding: '0.5rem'
+              }}>TOP WORLDWIDE LONGEST STREAKS</div>
+              {renderEntries(worldwide, 0)}
+            </div>
             <div style={{
-              backgroundColor: '#cc3b2f',
-              color: 'white',
-              fontWeight: 'bold',
-              textAlign: 'center',
-              padding: '0.5rem'
-            }}>FRIENDS</div>
-            {renderEntries(friends)}
-          </div>
-        </section>
+              border: '1px solid black',
+              borderRadius: '8px',
+              overflow: 'hidden',
+              width: '260px',
+              backgroundColor: 'white'
+            }}>
+              <div style={{
+                backgroundColor: '#cc3b2f',
+                color: 'white',
+                fontWeight: 'bold',
+                textAlign: 'center',
+                padding: '0.5rem'
+              }}>TOP FRIENDS LONGEST STREAKS</div>
+              {renderEntries(friends, 0)}
+            </div>
+          </section>
+          <section style={{ display: 'flex', gap: '3rem' }}>
+            <div style={{
+              border: '1px solid black',
+              borderRadius: '8px',
+              overflow: 'hidden',
+              width: '260px', 
+              backgroundColor: 'white'
+            }}>
+              <div style={{
+                backgroundColor: '#153d66',
+                color: 'white',
+                fontWeight: 'bold',
+                textAlign: 'center',
+                padding: '0.5rem'
+              }}>TOP WORLDWIDE CURRENT STREAKS</div>
+              {renderEntries(worldwide, 1)}
+            </div>
+            <div style={{
+              border: '1px solid black',
+              borderRadius: '8px',
+              overflow: 'hidden',
+              width: '260px',
+              backgroundColor: 'white'
+            }}>
+              <div style={{
+                backgroundColor: '#153d66',
+                color: 'white',
+                fontWeight: 'bold',
+                textAlign: 'center',
+                padding: '0.5rem'
+              }}>TOP FRIENDS CURRENT STREAKS</div>
+              {renderEntries(friends, 1)}
+            </div>
+          </section>
+        </div>
       </main>
     </div>
   );
