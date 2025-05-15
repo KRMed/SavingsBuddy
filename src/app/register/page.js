@@ -36,32 +36,80 @@ export default function Register() {
   };
 
   return (
-    <main style={{ padding: '2rem', maxWidth: '400px', margin: '0 auto' }}>
-      <h1>Register</h1>
-      <form onSubmit={handleRegister}>
-        <input
-          type="email"
-          placeholder="Email"
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        /><br /><br />
-        <input
-          type="password"
-          placeholder="Password"
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        /><br /><br />
-        <button type="submit" disabled={loading}>
-          {loading ? 'Registering...' : 'Register'}
-        </button>
-      </form>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-      
-      <hr style={{ margin: '2rem 0' }} />
+    <div style={{ height: '100vh', backgroundColor: 'white', display: 'flex', flexDirection: 'column' }}>
+      {/* Header */}
+      <header style={{
+        backgroundColor: '#153d66',
+        color: 'white',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: '0.5rem 1rem'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <div style={{
+            width: 40,
+            height: 40,
+            background: 'white',
+            borderRadius: '50%',
+            marginRight: '1rem'
+          }}></div>
+         
+        </div>
+      </header>
+    <main style={{ flexGrow: 1, display: 'flex', justifyContent: 'center', 
+        alignItems: 'center', backgroundColor: '#f3f4f6' }}>
+            <div style={{ backgroundColor: '#D9D9D9' }} 
+            className="rounded-lg w-[551px] h-[235px] rounded-lg p-6 flex flex-col justify-center"
+            >
+        <form className="text-black mt-15" onSubmit={handleRegister}>
 
-      <button onClick={goToLeaderboard} style={{ padding: '0.5rem 1rem' }}>
-        Go to Leaderboard
-      </button>
+            <div className="flex items-center space-x-2 mb-4 max-w-md mx-auto">
+                <label htmlFor="email" className="w-20 text-right text-black">
+                Email:
+                </label>
+                <input
+                    id="email"
+                    type="email"
+                    onChange={(e) => {{setEmail(e.target.value)}; setError('');}}
+                    
+                    className="bg-white border border-black rounded-lg p-2 w-80"
+                />
+            </div>
+
+           <div className="flex items-center space-x-2 mb-4 max-w-md mx-auto">
+            <label htmlFor="password" className="w-20 text-right text-black">
+                Password:
+            </label>
+            <input
+                id="password"
+                type="password"
+                onChange={(e) => {setPassword(e.target.value); setError('');}}
+                className="bg-white border border-black rounded-lg p-2 w-80"
+            />
+            </div>
+
+             {/*The login button*/}
+            <div className="max-w-md mx-auto mb-4">
+                <div className="ml-48">
+                    <button
+                        type="submit"
+                        disabled={loading}
+                        style= {{backgroundColor: '#004878'}}
+                        className="text-white px-4 py-2 rounded-lg"
+                    >
+                {loading ? 'Registering...' : 'Register'}
+            </button>
+
+            </div>
+            <div className="flex justify-center mt-2 min-h-[1.5rem]">
+                {error && <p style={{ color: 'black' }}>{error}</p>}
+            </div> 
+
+          </div>
+        </form>
+      </div>
     </main>
+    </div>
   );
 }
