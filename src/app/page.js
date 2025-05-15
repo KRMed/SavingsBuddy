@@ -1,4 +1,5 @@
 'use client';
+import LandingPage from "@/components/LandingPage";
 import Image from "next/image";
 
 export default function Home() {
@@ -6,7 +7,7 @@ export default function Home() {
     // edit here, this is temp home page
     // for the header/navbar, use the layout.js file
     <main>
-      <h1>home page</h1>
+      <LandingPage />
     </main>
     
   );
