@@ -85,6 +85,7 @@ const Header = () => {
                         zIndex: 1000
                     }}>
                         <a href="/" style={{ display: 'block', padding: '0.5rem', color: '#153D66', textDecoration: 'none' }}>Profile</a>
+                        <a href="/" style={{ display: 'block', padding: '0.5rem', color: '#153D66', textDecoration: 'none' }}>Friends</a>
                         <a href="/" style={{ display: 'block', padding: '0.5rem', color: '#153D66', textDecoration: 'none' }}>Settings</a>
                         <a href="/" style={{ display: 'block', padding: '0.5rem', color: '#CC3B2F', textDecoration: 'none' }}>Logout</a>
                     </div>
