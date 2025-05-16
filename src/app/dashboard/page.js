@@ -616,8 +616,6 @@ export default function Dashboard() {
           <div style={{ backgroundColor: '#D22E1E' }} className="text-white font-semibold p-4 rounded-lg shadow-md mx-8"> {/* Added mx-8 for horizontal margins */}
             <h2 className="text-3xl">Longest Streak: {displayUserLongestStreak}</h2> {/* Use animated value */}
           </div>
-          {/* Badge */}
-          <div className="bg-white text-gray-700 shadow-sm px-6 py-2 rounded text-xl">Badge</div>
         </div>
 
         <div className="flex flex-row gap-8"> {/* Wrapper for side-by-side modules */}
