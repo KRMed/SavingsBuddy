@@ -1,16 +1,21 @@
 "use client";
 
-import { usePathname } from "next/navigation"; // Use usePathname for accurate route detection
-import { useState } from "react"; // Import useState for managing popup state
+import { usePathname } from "next/navigation"; 
+import { useState } from "react"; 
 import savingsbuddyImage from "../assets/savingsbuddy.png";
 
 const Header = () => {
-    const pathname = usePathname(); // Get the current pathname
-    const isLandingPage = pathname === "/"; // Check if the current path is "/"
-    const [isPopupVisible, setIsPopupVisible] = useState(false); // State for popup visibility
+    const pathname = usePathname();
+    const isLandingPage = pathname === "/"; 
+    const [isPopupVisible, setIsPopupVisible] = useState(false); 
+    const [isSettingsPopupVisible, setIsSettingsPopupVisible] = useState(false); // State for settings popup visibility
 
     const togglePopup = () => {
         setIsPopupVisible((prev) => !prev);
+    };
+
+    const toggleSettingsPopup = () => {
+        setIsSettingsPopupVisible((prev) => !prev);
     };
 
     return (
@@ -23,19 +28,20 @@ const Header = () => {
         padding: '0.5rem 1rem'
       }}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
-          <img
-            href={savingsbuddyImage}
-            src={savingsbuddyImage.src}
-            alt="Logo"
-            style={{ width: '40px', height: '40px', marginRight: '1rem' }}
-          />
+          <a href="/">
+            <img
+                src={savingsbuddyImage.src}
+                alt="Logo"
+                style={{ width: '40px', height: '40px', marginRight: '1rem', cursor: 'pointer' }}
+            />
+          </a>
           <nav>
             <a href="/dashboard" style={{ marginRight: '1rem', color: 'white', textDecoration: 'none', fontWeight: 'bold' }}>DASHBOARD</a>
             <a href="/leaderboard" style={{ marginRight: '1rem', color: 'white', textDecoration: 'none', fontWeight: 'bold' }}>LEADERBOARD</a>
           </nav>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
-          {isLandingPage && ( // Conditionally render Login and Sign Up
+          {isLandingPage && ( 
                     <>
                         <a href="/login">
                             <button style={{
@@ -62,16 +68,16 @@ const Header = () => {
                         </a>
                     </>
                 )}
-          <div
-                    onClick={togglePopup}
-                    style={{
-                        width: 40,
-                        height: 40,
-                        background: 'white',
-                        borderRadius: '50%',
-                        marginLeft: '1rem',
-                        cursor: 'pointer'
-                    }}
+                <div
+                        onClick={togglePopup}
+                        style={{
+                            width: 40,
+                            height: 40,
+                            background: 'white',
+                            borderRadius: '50%',
+                            marginLeft: '1rem',
+                            cursor: 'pointer'
+                        }}
                 ></div>
                 {isPopupVisible && (
                     <div style={{
@@ -85,8 +91,31 @@ const Header = () => {
                         zIndex: 1000
                     }}>
                         <a href="/" style={{ display: 'block', padding: '0.5rem', color: '#153D66', textDecoration: 'none' }}>Profile</a>
-                        <a href="/" style={{ display: 'block', padding: '0.5rem', color: '#153D66', textDecoration: 'none' }}>Settings</a>
+                        <a
+                            href="#"
+                            onClick={(e) => {
+                                e.preventDefault(); // Prevent default link behavior
+                                toggleSettingsPopup();
+                            }}
+                            style={{ display: 'block', padding: '0.5rem', color: '#153D66', textDecoration: 'none' }}
+                        >
+                            Settings
+                        </a>
                         <a href="/" style={{ display: 'block', padding: '0.5rem', color: '#CC3B2F', textDecoration: 'none' }}>Logout</a>
+                    </div>
+                )}
+                {isSettingsPopupVisible && (
+                    <div style={{
+                        position: 'absolute',
+                        top: '100%',
+                        right: '0',
+                        background: 'white',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+                        padding: '1rem',
+                        zIndex: 1000
+                    }}>
+                        {/* Empty popup for now */}
                     </div>
                 )}
         </div>
