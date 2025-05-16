@@ -1,6 +1,26 @@
 'use client';
+import { useEffect, useState } from 'react';
+import { supabase } from '../supabaseClient';
+import { useRouter } from 'next/navigation';
 
 export default function Dashboard() {
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  // redirect if not logged in
+  useEffect(() => {
+    async function checkLogin() {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session) {
+        router.push('/login');
+      } else {
+        setLoading(false);
+      }
+    };
+    checkLogin();
+  }, [router]);
+  if (loading) return null;
     return (
   <div className="h-screen bg-gray-100">
     <div className="flex flex-row h-full">

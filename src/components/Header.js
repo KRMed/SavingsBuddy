@@ -1,12 +1,13 @@
 "use client";
 
-import { usePathname } from "next/navigation"; 
+import { usePathname, useRouter } from "next/navigation"; 
 import { useState } from "react"; 
 import savingsbuddyImage from "../assets/savingsbuddy.png";
 import { supabase } from "../app/supabaseClient";
 
 const Header = () => {
     const pathname = usePathname();
+    const router = useRouter();
     const isLandingPage = pathname === "/"; 
     const [isPopupVisible, setIsPopupVisible] = useState(false); 
     const [isSettingsPopupVisible, setIsSettingsPopupVisible] = useState(false); // State for settings popup visibility
@@ -112,7 +113,15 @@ const Header = () => {
                         >
                             Settings
                         </a>
-                        <a href="/" style={{ display: 'block', padding: '0.5rem', color: '#CC3B2F', textDecoration: 'none' }} onClick={logout}>Logout</a>
+                        <a 
+                            href="/login" 
+                            style={{ display: 'block', padding: '0.5rem', color: '#CC3B2F', textDecoration: 'none' }} 
+                            onClick={(e) => {
+                                e.preventDefault();
+                                logout();
+                            }}>
+                            Logout
+                        </a>
                     </div>
                 )}
                 {isSettingsPopupVisible && (
