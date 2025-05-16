@@ -1,8 +1,56 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react'; // Added useCallback
 import { supabase } from '../supabaseClient';
 import { useRouter } from 'next/navigation';
 import { PlaidLink, usePlaidLink } from 'react-plaid-link';
+import FireEmojiRain from '../../components/FireEmojiRain'; // Import the animation component
+
+// Helper function for counter animation
+const useAnimatedCounter = (targetValue, duration = 500) => {
+  const [displayValue, setDisplayValue] = useState(0);
+  const [isActive, setIsActive] = useState(false);
+  const [internalTarget, setInternalTarget] = useState(targetValue);
+
+  useEffect(() => {
+    // Initialize displayValue with the initial targetValue without animation
+    setDisplayValue(targetValue);
+  }, []); // Run only once on mount
+
+  const triggerAnimation = useCallback((newTarget) => {
+    const startValue = displayValue;
+    setInternalTarget(newTarget);
+    setIsActive(true);
+
+    let startTime = null;
+    const animate = (currentTime) => {
+      if (!startTime) startTime = currentTime;
+      const elapsedTime = currentTime - startTime;
+      const progress = Math.min(elapsedTime / duration, 1);
+      const currentAnimatedValue = Math.floor(startValue + (newTarget - startValue) * progress);
+      setDisplayValue(currentAnimatedValue);
+
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        setDisplayValue(newTarget); // Ensure it ends exactly on target
+        setIsActive(false);
+      }
+    };
+    requestAnimationFrame(animate);
+  }, [displayValue, duration]);
+
+
+  // Update displayValue directly if targetValue changes from props and no animation is active
+  useEffect(() => {
+    if (!isActive) {
+      setDisplayValue(targetValue);
+    }
+  }, [targetValue, isActive]);
+
+
+  return [displayValue, triggerAnimation, setDisplayValue];
+};
+
 
 export default function Dashboard() {
   const router = useRouter();
@@ -19,6 +67,7 @@ export default function Dashboard() {
   const [savingsGoalMet, setSavingsGoalMet] = useState(false); // Added savingsGoalMet state
   const [lastStreakUpdateDate, setLastStreakUpdateDate] = useState(null); // Added state for last streak update date
   const [userLongestStreak, setUserLongestStreak] = useState(0); // Added userLongestStreak state
+  const [showFireAnimation, setShowFireAnimation] = useState(false); // State for fire animation
 
   // State for editing goals
   const [isEditingBudgetGoal, setIsEditingBudgetGoal] = useState(false);
@@ -32,6 +81,10 @@ export default function Dashboard() {
   const [currentUserFriends, setCurrentUserFriends] = useState([]);
   const [friendsLoading, setFriendsLoading] = useState(false);
   const [currentUserId, setCurrentUserId] = useState(null);
+
+  // Animated counters
+  const [displayUserStreak, triggerUserStreakAnimation, setDirectUserStreak] = useAnimatedCounter(userStreak);
+  const [displayUserLongestStreak, triggerUserLongestStreakAnimation, setDirectUserLongestStreak] = useAnimatedCounter(userLongestStreak);
 
   // redirect if not logged in
   useEffect(() => {
@@ -359,11 +412,17 @@ export default function Dashboard() {
             console.error('Error updating streak:', error);
           } else {
             setUserStreak(newCurrentStreak);
+            triggerUserStreakAnimation(newCurrentStreak); // Animate current streak
             setLastStreakUpdateDate(today);
             if (updateData.longest_streak !== undefined) {
               setUserLongestStreak(newLongestStreak);
+              triggerUserLongestStreakAnimation(newLongestStreak); // Animate longest streak
             }
             console.log('Streak updated successfully to:', newCurrentStreak, 'Longest streak:', newLongestStreak, 'on', today);
+
+            // Trigger fire animation
+            setShowFireAnimation(true);
+            setTimeout(() => setShowFireAnimation(false), 2000); // Hide after 2 seconds
           }
         } catch (e) {
           console.error('Exception updating streak:', e);
@@ -376,6 +435,12 @@ export default function Dashboard() {
        updateUserStreak();
     }
   }, [budgetGoalMet, savingsGoalMet, loading, userStreak, userLongestStreak, lastStreakUpdateDate, router]); // Added userLongestStreak to dependencies
+
+  useEffect(() => {
+    // When userStreak or userLongestStreak changes from initial fetch, update display values directly
+    setDirectUserStreak(userStreak);
+    setDirectUserLongestStreak(userLongestStreak);
+  }, [userStreak, userLongestStreak, setDirectUserStreak, setDirectUserLongestStreak]);
 
   const handleSearchFriends = async () => {
     if (!friendSearchTerm.trim() || !currentUserId) {
@@ -489,13 +554,14 @@ export default function Dashboard() {
   
     return (
   <div className="h-screen bg-gray-100">
+    <FireEmojiRain active={showFireAnimation} /> {/* Add FireEmojiRain component */}
     <div className="flex flex-row h-full">
-      <aside className="bg-gray-700 flex flex-col items-center justify-start h-[600px] w-[300px] m-8 p-4">
-        <h3 className="text-xl text-center mb-4">Transactions History</h3>
-        {plaidLoading && <p>Loading Plaid data...</p>}
+      <aside className="bg-white shadow-md rounded-lg flex flex-col items-center justify-start h-[600px] w-[300px] m-8 p-4">
+        <h3 className="text-xl text-gray-800 text-center mb-4">Transactions History</h3>
+        {plaidLoading && <p className="text-gray-600">Loading Plaid data...</p>}
         {!accessToken && !plaidLoading && (
           <>
-            <p className="text-center mb-2">Authenticate with Plaid to see your transactions.</p>
+            <p className="text-gray-600 text-center mb-2">Authenticate with Plaid to see your transactions.</p>
             <button
               onClick={() => open()}
               disabled={!ready || plaidLoading}
@@ -507,7 +573,7 @@ export default function Dashboard() {
         )}
         {accessToken && !plaidLoading && accounts.length > 0 && (
           <div className="mb-4 w-full">
-            <label htmlFor="account-select" className="block text-sm font-medium text-white mb-1">Select Account:</label>
+            <label htmlFor="account-select" className="block text-sm font-medium text-gray-700 mb-1">Select Account:</label>
             <select
               id="account-select"
               value={selectedAccountId}
@@ -526,62 +592,70 @@ export default function Dashboard() {
         {accessToken && !plaidLoading && transactions.length > 0 && (
           <ul className="overflow-y-auto w-full">
             {transactions.map((transaction) => (
-              <li key={transaction.transaction_id} className="mb-2 p-2 bg-gray-600 rounded">
-                <p className="font-semibold">{transaction.name}</p>
-                <p className="text-sm">${transaction.amount.toFixed(2)} ({transaction.date})</p>
+              <li key={transaction.transaction_id} className="mb-2 p-2 bg-gray-100 rounded">
+                <p className="font-semibold text-gray-800">{transaction.name}</p>
+                <p className="text-sm text-gray-600">${transaction.amount.toFixed(2)} ({transaction.date})</p>
               </li>
             ))}
           </ul>
         )}
         {accessToken && !plaidLoading && transactions.length === 0 && selectedAccountId && (
-          <p>No transactions found for the selected account.</p>
+          <p className="text-gray-600">No transactions found for the selected account.</p>
         )}
          {accessToken && !plaidLoading && accounts.length === 0 && !plaidLoading && (
-          <p>No accounts found. Try re-authenticating with Plaid.</p>
+          <p className="text-gray-600">No accounts found. Try re-authenticating with Plaid.</p>
         )}
       </aside>
       <div className="flex flex-col flex-1 p-8">
         <div className="flex items-center justify-between mb-8">
-          <h2 className="text-3xl text-black font-semibold">Streak: {userStreak}</h2>
-          <div className="bg-gray-700 px-6 py-2 rounded text-xl">Badge</div>
+          {/* Current Streak */}
+          <div className="bg-orange-500 text-white font-semibold p-4 rounded-lg shadow-md">
+            <h2 className="text-3xl">Current Streak: {displayUserStreak}</h2> {/* Use animated value */}
+          </div>
+          {/* Longest Streak */}
+          <div style={{ backgroundColor: '#D22E1E' }} className="text-white font-semibold p-4 rounded-lg shadow-md mx-8"> {/* Added mx-8 for horizontal margins */}
+            <h2 className="text-3xl">Longest Streak: {displayUserLongestStreak}</h2> {/* Use animated value */}
+          </div>
+          {/* Badge */}
+          <div className="bg-white text-gray-700 shadow-sm px-6 py-2 rounded text-xl">Badge</div>
         </div>
 
         <div className="flex flex-row gap-8"> {/* Wrapper for side-by-side modules */}
           <div className="flex flex-col gap-8"> {/* Left column for Daily Goals and Settings */}
             {/* Daily Goals Section */}
-            <div className="bg-gray-700 p-6 rounded w-[500px]">
-              <h3 className="text-2xl mb-4">Daily Goals:</h3>
+            <div className="bg-white shadow-md rounded-lg p-6 w-[500px]">
+              <h3 className="text-2xl text-gray-800 mb-4">Daily Goals:</h3>
               {!accessToken ? (
-                <p className="text-gray-400">Please authenticate with Plaid to track your goals.</p>
+                <p className="text-gray-500">Please authenticate with Plaid to track your goals.</p>
               ) : (
                 <ul>
                   <li className="flex items-center mb-2">
                     <input type="checkbox" checked={budgetGoalMet} disabled className="mr-2 h-5 w-5 accent-green-500" />
-                    <span>Expenses under daily budget (Target: ${userGoals.budget_goal})</span>
+                    <span className="text-gray-700">Expenses under daily budget (Target: ${userGoals.budget_goal})</span>
                   </li>
                   <li className="flex items-center">
                     <input type="checkbox" checked={savingsGoalMet} disabled className="mr-2 h-5 w-5 accent-green-500" />
-                    <span>Met daily savings goal (Target: ${userGoals.savings_goal})</span>
+                    <span className="text-gray-700">Met daily savings goal (Target: ${userGoals.savings_goal})</span>
                   </li>
                 </ul>
               )}
             </div>
 
             {/* Settings Section */}
-            <div className="bg-gray-700 p-6 rounded w-[500px]">
-              <h3 className="text-2xl mb-4">Settings</h3>
+            <div className="bg-white shadow-md rounded-lg p-6 w-[500px]">
+              <h3 className="text-2xl text-gray-800 mb-4">Settings</h3>
               {/* Budget Goal Setting */}
               <div className="flex items-center mb-4">
-                <label htmlFor="budgetGoalInput" className="mr-2 text-white">Daily Budget Goal:</label>
-                <input 
-                  type="number" 
-                  id="budgetGoalInput" 
-                  value={isEditingBudgetGoal ? newBudgetGoal : userGoals.budget_goal} 
-                  onChange={(e) => setNewBudgetGoal(e.target.value)} 
-                  disabled={!isEditingBudgetGoal} 
-                  className="p-1 rounded bg-gray-600 text-white w-24 mr-2 disabled:opacity-70"
+                <label htmlFor="budgetGoalInput" className="mr-2 text-gray-700">Daily Budget Goal:</label>
+                <input
+                  type="number"
+                  id="budgetGoalInput"
+                  value={isEditingBudgetGoal ? newBudgetGoal : userGoals.budget_goal}
+                  onChange={(e) => setNewBudgetGoal(e.target.value)}
+                  disabled={!isEditingBudgetGoal}
+                  className="p-1 rounded bg-gray-100 text-gray-800 border border-gray-300 w-24 mr-2 disabled:opacity-70"
                 />
-                <button 
+                <button
                   onClick={() => {
                     if (isEditingBudgetGoal) {
                       handleGoalUpdate('budget', newBudgetGoal);
@@ -598,16 +672,16 @@ export default function Dashboard() {
 
               {/* Savings Goal Setting */}
               <div className="flex items-center mb-4">
-                <label htmlFor="savingsGoalInput" className="mr-2 text-white">Daily Savings Goal:</label>
-                <input 
-                  type="number" 
-                  id="savingsGoalInput" 
-                  value={isEditingSavingsGoal ? newSavingsGoal : userGoals.savings_goal} 
-                  onChange={(e) => setNewSavingsGoal(e.target.value)} 
-                  disabled={!isEditingSavingsGoal} 
-                  className="p-1 rounded bg-gray-600 text-white w-24 mr-2 disabled:opacity-70"
+                <label htmlFor="savingsGoalInput" className="mr-2 text-gray-700">Daily Savings Goal:</label>
+                <input
+                  type="number"
+                  id="savingsGoalInput"
+                  value={isEditingSavingsGoal ? newSavingsGoal : userGoals.savings_goal}
+                  onChange={(e) => setNewSavingsGoal(e.target.value)}
+                  disabled={!isEditingSavingsGoal}
+                  className="p-1 rounded bg-gray-100 text-gray-800 border border-gray-300 w-24 mr-2 disabled:opacity-70"
                 />
-                <button 
+                <button
                   onClick={() => {
                     if (isEditingSavingsGoal) {
                       handleGoalUpdate('savings', newSavingsGoal);
@@ -625,35 +699,35 @@ export default function Dashboard() {
           </div>
 
           {/* Find Friends Module (Right Column) */}
-          <div className="bg-gray-700 p-6 rounded w-[500px] flex-shrink-0">
-            <h3 className="text-2xl mb-4">Find Friends</h3>
+          <div className="bg-white shadow-md rounded-lg p-6 w-[500px] flex-shrink-0">
+            <h3 className="text-2xl text-gray-800 mb-4">Find Friends</h3>
             <div className="flex mb-4">
-              <input 
-                type="text" 
-                placeholder="Search by username..." 
-                value={friendSearchTerm} 
-                onChange={(e) => setFriendSearchTerm(e.target.value)} 
-                className="p-2 rounded-l bg-gray-600 text-white flex-grow"
+              <input
+                type="text"
+                placeholder="Search by username..."
+                value={friendSearchTerm}
+                onChange={(e) => setFriendSearchTerm(e.target.value)}
+                className="p-2 rounded-l bg-gray-100 text-gray-800 border border-gray-300 flex-grow"
               />
-              <button 
-                onClick={handleSearchFriends} 
+              <button
+                onClick={handleSearchFriends}
                 disabled={friendsLoading}
                 className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-r disabled:opacity-50"
               >
                 {friendsLoading ? 'Searching...' : 'Search'}
               </button>
             </div>
-            {friendsLoading && <p className="text-gray-400">Loading...</p>}
+            {friendsLoading && <p className="text-gray-500">Loading...</p>}
             {!friendsLoading && friendSearchResults.length === 0 && friendSearchTerm && (
-              <p className="text-gray-400">No users found or already friends.</p>
+              <p className="text-gray-500">No users found or already friends.</p>
             )}
             {!friendsLoading && friendSearchResults.length > 0 && (
               <ul className="max-h-60 overflow-y-auto">
                 {friendSearchResults.map(user => (
-                  <li key={user.id} className="flex items-center justify-between p-2 mb-2 bg-gray-600 rounded">
-                    <span className="text-white">{user.username}</span>
-                    <button 
-                      onClick={() => handleAddFriend(user.id)} 
+                  <li key={user.id} className="flex items-center justify-between p-2 mb-2 bg-gray-100 rounded">
+                    <span className="text-gray-800">{user.username}</span>
+                    <button
+                      onClick={() => handleAddFriend(user.id)}
                       disabled={friendsLoading || currentUserFriends.includes(user.id)}
                       className="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-3 rounded disabled:opacity-50"
                     >
