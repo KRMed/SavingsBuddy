@@ -24,6 +24,7 @@ const Header = () => {
       }}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <img
+            href={savingsbuddyImage}
             src={savingsbuddyImage.src}
             alt="Logo"
             style={{ width: '40px', height: '40px', marginRight: '1rem' }}
@@ -83,9 +84,9 @@ const Header = () => {
                         padding: '0.5rem',
                         zIndex: 1000
                     }}>
-                        <a href="/profile" style={{ display: 'block', padding: '0.5rem', color: '#153D66', textDecoration: 'none' }}>Profile</a>
-                        <a href="/settings" style={{ display: 'block', padding: '0.5rem', color: '#153D66', textDecoration: 'none' }}>Settings</a>
-                        <a href="/logout" style={{ display: 'block', padding: '0.5rem', color: '#CC3B2F', textDecoration: 'none' }}>Logout</a>
+                        <a href="/" style={{ display: 'block', padding: '0.5rem', color: '#153D66', textDecoration: 'none' }}>Profile</a>
+                        <a href="/" style={{ display: 'block', padding: '0.5rem', color: '#153D66', textDecoration: 'none' }}>Settings</a>
+                        <a href="/" style={{ display: 'block', padding: '0.5rem', color: '#CC3B2F', textDecoration: 'none' }}>Logout</a>
                     </div>
                 )}
         </div>
