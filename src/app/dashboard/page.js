@@ -18,6 +18,7 @@ export default function Dashboard() {
   const [budgetGoalMet, setBudgetGoalMet] = useState(false); // Added budgetGoalMet state
   const [savingsGoalMet, setSavingsGoalMet] = useState(false); // Added savingsGoalMet state
   const [lastStreakUpdateDate, setLastStreakUpdateDate] = useState(null); // Added state for last streak update date
+  const [userLongestStreak, setUserLongestStreak] = useState(0); // Added userLongestStreak state
 
   // State for editing goals
   const [isEditingBudgetGoal, setIsEditingBudgetGoal] = useState(false);
@@ -44,9 +45,9 @@ export default function Dashboard() {
       } else {
         // Session exists, now fetch user data including streak, goals, and last streak update date
         try {
-          const { data: userData, error: userError } = await supabase
+          let { data: userData, error: userError } = await supabase
             .from('profiles') // Assuming a 'profiles' table
-            .select('current_streak, budget_goal, savings_goal, last_streak_update_date') // Added last_streak_update_date
+            .select('current_streak, longest_streak, budget_goal, savings_goal, last_streak_update_date') // Added longest_streak
             .eq('id', session.user.id)
             .single(); // Assuming one row per user
 
@@ -54,13 +55,41 @@ export default function Dashboard() {
             console.error('Error fetching user profile:', userError);
             // Handle error, maybe set streak to a default or show an error message
             // For now, we'll let it use the default 0
+            setLoading(false);
+            return;
           } else if (userData) {
-            setUserStreak(userData.current_streak || 0);
+            const today = new Date().toISOString().split('T')[0];
+            let currentStreak = userData.current_streak || 0;
+            const lastUpdateDate = userData.last_streak_update_date;
+
+            if (lastUpdateDate && lastUpdateDate !== today) {
+              const lastDate = new Date(lastUpdateDate);
+              const currentDate = new Date(today);
+              const diffTime = currentDate - lastDate; // Difference in milliseconds
+              const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+              if (diffDays > 1) {
+                // User missed more than a day, reset current streak
+                currentStreak = 0;
+                const { error: updateError } = await supabase
+                  .from('profiles')
+                  .update({ current_streak: 0 })
+                  .eq('id', session.user.id);
+                if (updateError) {
+                  console.error('Error resetting streak:', updateError);
+                } else {
+                  console.log('User missed a day, current streak reset to 0.');
+                }
+              }
+            }
+
+            setUserStreak(currentStreak);
+            setUserLongestStreak(userData.longest_streak || 0);
             setUserGoals({
               budget_goal: userData.budget_goal || 0,
               savings_goal: userData.savings_goal || 0,
             });
-            setLastStreakUpdateDate(userData.last_streak_update_date); // Set last streak update date
+            setLastStreakUpdateDate(lastUpdateDate); // Set last streak update date
           }
         } catch (e) {
           console.error('Exception fetching user profile:', e);
@@ -274,18 +303,33 @@ export default function Dashboard() {
       // Check if goals are met and if streak hasn't been updated today
       if ((budgetGoalMet || savingsGoalMet) && lastStreakUpdateDate !== today) {
         try {
-          const newStreak = (userStreak || 0) + 1;
+          const newCurrentStreak = (userStreak || 0) + 1;
+          let newLongestStreak = userLongestStreak || 0;
+          
+          let updateData = {
+            current_streak: newCurrentStreak,
+            last_streak_update_date: today,
+          };
+
+          if (newCurrentStreak > newLongestStreak) {
+            newLongestStreak = newCurrentStreak;
+            updateData.longest_streak = newLongestStreak;
+          }
+
           const { error } = await supabase
             .from('profiles')
-            .update({ current_streak: newStreak, last_streak_update_date: today })
+            .update(updateData)
             .eq('id', session.user.id);
 
           if (error) {
             console.error('Error updating streak:', error);
           } else {
-            setUserStreak(newStreak);
+            setUserStreak(newCurrentStreak);
             setLastStreakUpdateDate(today);
-            console.log('Streak updated successfully to:', newStreak, 'on', today);
+            if (updateData.longest_streak !== undefined) {
+              setUserLongestStreak(newLongestStreak);
+            }
+            console.log('Streak updated successfully to:', newCurrentStreak, 'Longest streak:', newLongestStreak, 'on', today);
           }
         } catch (e) {
           console.error('Exception updating streak:', e);
@@ -297,7 +341,7 @@ export default function Dashboard() {
     if (!loading && (budgetGoalMet !== undefined && savingsGoalMet !== undefined)) {
        updateUserStreak();
     }
-  }, [budgetGoalMet, savingsGoalMet, loading, userStreak, lastStreakUpdateDate, router]); // Dependencies for streak update
+  }, [budgetGoalMet, savingsGoalMet, loading, userStreak, userLongestStreak, lastStreakUpdateDate, router]); // Added userLongestStreak to dependencies
 
   const handleGoalUpdate = async (goalType, newValue) => {
     const { data: { session } } = await supabase.auth.getSession();

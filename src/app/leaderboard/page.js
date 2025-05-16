@@ -3,25 +3,57 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
 
 export default function LeaderboardPage() {
-  const [worldwide, setWorldwide] = useState([]);
+  const [worldwideLongest, setWorldwideLongest] = useState([]); // New state for longest streaks
+  const [worldwideCurrent, setWorldwideCurrent] = useState([]); // New state for current streaks
   const [friends, setFriends] = useState([]);
   const [loading, setLoading] = useState(true);
   
 
   useEffect(() => {
-    const fetchWorldWideLeaderboard = async () => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('username, current_streak')
-        .order('current_streak', { ascending: false })
-        .limit(50);
+    const fetchLeaderboards = async () => {
+      setLoading(true);
+      try {
+        // Fetch for Worldwide Longest Streaks
+        const { data: longestData, error: longestError } = await supabase
+          .from('profiles')
+          .select('username, current_streak, longest_streak')
+          .order('longest_streak', { ascending: false })
+          .limit(50);
 
-      if (!error) setWorldwide(data);
-      setLoading(false);
+        if (longestError) {
+          console.error("Error fetching worldwide longest streaks:", longestError);
+          // Handle error appropriately
+        } else {
+          setWorldwideLongest(longestData || []);
+        }
+
+        // Fetch for Worldwide Current Streaks
+        const { data: currentData, error: currentError } = await supabase
+          .from('profiles')
+          .select('username, current_streak, longest_streak') // longest_streak can be kept for consistency if renderEntries expects it
+          .order('current_streak', { ascending: false })
+          .limit(50);
+
+        if (currentError) {
+          console.error("Error fetching worldwide current streaks:", currentError);
+          // Handle error appropriately
+        } else {
+          setWorldwideCurrent(currentData || []);
+        }
+
+        // Assuming friends fetching logic is separate or will be updated similarly
+        // For now, friends data fetching is not modified as per the specific issue reported.
+
+      } catch (error) {
+        console.error("Error fetching leaderboards:", error);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    fetchWorldWideLeaderboard();
+    fetchLeaderboards();
   }, []);
+
   if (loading) return <p>Loading leaderboard...</p>;
   const renderEntries = (entries, current) =>
     entries.map((entry, index) => (
@@ -85,7 +117,7 @@ export default function LeaderboardPage() {
                 textAlign: 'center',
                 padding: '0.5rem'
               }}>TOP WORLDWIDE LONGEST STREAKS</div>
-              {renderEntries(worldwide, 0)}
+              {renderEntries(worldwideLongest, 1)}
             </div>
             <div style={{
               border: '1px solid black',
@@ -101,7 +133,7 @@ export default function LeaderboardPage() {
                 textAlign: 'center',
                 padding: '0.5rem'
               }}>TOP FRIENDS LONGEST STREAKS</div>
-              {renderEntries(friends, 0)}
+              {renderEntries(friends, 1)}
             </div>
           </section>
           <section style={{ display: 'flex', gap: '3rem' }}>
@@ -119,7 +151,7 @@ export default function LeaderboardPage() {
                 textAlign: 'center',
                 padding: '0.5rem'
               }}>TOP WORLDWIDE CURRENT STREAKS</div>
-              {renderEntries(worldwide, 1)}
+              {renderEntries(worldwideCurrent, 0)}
             </div>
             <div style={{
               border: '1px solid black',
@@ -135,7 +167,7 @@ export default function LeaderboardPage() {
                 textAlign: 'center',
                 padding: '0.5rem'
               }}>TOP FRIENDS CURRENT STREAKS</div>
-              {renderEntries(friends, 1)}
+              {renderEntries(friends, 0)}
             </div>
           </section>
         </div>
