@@ -26,6 +26,13 @@ export default function Dashboard() {
   const [isEditingSavingsGoal, setIsEditingSavingsGoal] = useState(false);
   const [newSavingsGoal, setNewSavingsGoal] = useState('');
 
+  // State for Friends module
+  const [friendSearchTerm, setFriendSearchTerm] = useState('');
+  const [friendSearchResults, setFriendSearchResults] = useState([]);
+  const [currentUserFriends, setCurrentUserFriends] = useState([]);
+  const [friendsLoading, setFriendsLoading] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState(null);
+
   // redirect if not logged in
   useEffect(() => {
     async function checkLoginAndFetchData() {
@@ -43,6 +50,7 @@ export default function Dashboard() {
       if (!session) {
         router.push('/login');
       } else {
+        setCurrentUserId(session.user.id); // Set current user ID
         // Session exists, now fetch user data including streak, goals, and last streak update date
         try {
           let { data: userData, error: userError } = await supabase
@@ -100,6 +108,32 @@ export default function Dashboard() {
     };
     checkLoginAndFetchData();
   }, [router]);
+
+  // Fetch current user's friends
+  useEffect(() => {
+    const fetchCurrentUserFriends = async () => {
+      if (!currentUserId) return;
+      setFriendsLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('friends')
+          .select('friend_id')
+          .eq('user_id', currentUserId);
+        if (error) {
+          console.error('Error fetching current friends:', error);
+          setCurrentUserFriends([]);
+        } else {
+          setCurrentUserFriends(data.map(f => f.friend_id));
+        }
+      } catch (e) {
+        console.error('Exception fetching current friends:', e);
+        setCurrentUserFriends([]);
+      } finally {
+        setFriendsLoading(false);
+      }
+    };
+    fetchCurrentUserFriends();
+  }, [currentUserId]);
 
   // Fetch Link Token
   useEffect(() => {
@@ -343,6 +377,66 @@ export default function Dashboard() {
     }
   }, [budgetGoalMet, savingsGoalMet, loading, userStreak, userLongestStreak, lastStreakUpdateDate, router]); // Added userLongestStreak to dependencies
 
+  const handleSearchFriends = async () => {
+    if (!friendSearchTerm.trim() || !currentUserId) {
+      setFriendSearchResults([]);
+      return;
+    }
+    setFriendsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, username')
+        .ilike('username', `%${friendSearchTerm.trim()}%`)
+        .neq('id', currentUserId); // Exclude current user from search
+
+      if (error) {
+        console.error('Error searching friends:', error);
+        setFriendSearchResults([]);
+      } else {
+        // Filter out users who are already friends
+        const nonFriends = data.filter(profile => !currentUserFriends.includes(profile.id));
+        setFriendSearchResults(nonFriends);
+      }
+    } catch (e) {
+      console.error('Exception searching friends:', e);
+      setFriendSearchResults([]);
+    } finally {
+      setFriendsLoading(false);
+    }
+  };
+
+  const handleAddFriend = async (friendToAddId) => {
+    if (!currentUserId || !friendToAddId) return;
+    setFriendsLoading(true);
+    try {
+      // Check if already friends (double-check, though UI should prevent this)
+      if (currentUserFriends.includes(friendToAddId)) {
+        console.log("Already friends with this user.");
+        setFriendsLoading(false);
+        return;
+      }
+
+      const { error } = await supabase
+        .from('friends')
+        .insert([{ user_id: currentUserId, friend_id: friendToAddId, created_at: new Date().toISOString() }]);
+      
+      if (error) {
+        console.error('Error adding friend:', error);
+        // Handle error (e.g., show a message to the user)
+      } else {
+        console.log('Friend added successfully');
+        setCurrentUserFriends(prevFriends => [...prevFriends, friendToAddId]);
+        setFriendSearchResults(prevResults => prevResults.filter(user => user.id !== friendToAddId)); // Remove from search results
+        // Optionally, clear search term or provide other feedback
+      }
+    } catch (e) {
+      console.error('Exception adding friend:', e);
+    } finally {
+      setFriendsLoading(false);
+    }
+  };
+
   const handleGoalUpdate = async (goalType, newValue) => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session || !session.user) {
@@ -451,78 +545,125 @@ export default function Dashboard() {
           <h2 className="text-3xl text-black font-semibold">Streak: {userStreak}</h2>
           <div className="bg-gray-700 px-6 py-2 rounded text-xl">Badge</div>
         </div>
-        <div className="bg-gray-700 p-6 rounded w-[500px]">
-          <h3 className="text-2xl mb-4">Daily Goals:</h3>
-          {!accessToken ? (
-            <p className="text-gray-400">Please authenticate with Plaid to track your goals.</p>
-          ) : (
-            <ul>
-              <li className="flex items-center mb-2">
-                <input type="checkbox" checked={budgetGoalMet} disabled className="mr-2 h-5 w-5 accent-green-500" />
-                <span>Expenses under daily budget (Target: ${userGoals.budget_goal})</span>
-              </li>
-              <li className="flex items-center">
-                <input type="checkbox" checked={savingsGoalMet} disabled className="mr-2 h-5 w-5 accent-green-500" />
-                <span>Met daily savings goal (Target: ${userGoals.savings_goal})</span>
-              </li>
-            </ul>
-          )}
-        </div>
-        {/* Settings Section */}
-        <div className="bg-gray-700 p-6 rounded w-[500px] mt-8">
-          <h3 className="text-2xl mb-4">Settings</h3>
-          {/* Budget Goal Setting */}
-          <div className="flex items-center mb-4">
-            <label htmlFor="budgetGoalInput" className="mr-2 text-white">Daily Budget Goal:</label>
-            <input 
-              type="number" 
-              id="budgetGoalInput" 
-              value={isEditingBudgetGoal ? newBudgetGoal : userGoals.budget_goal} 
-              onChange={(e) => setNewBudgetGoal(e.target.value)} 
-              disabled={!isEditingBudgetGoal} 
-              className="p-1 rounded bg-gray-600 text-white w-24 mr-2 disabled:opacity-70"
-            />
-            <button 
-              onClick={() => {
-                if (isEditingBudgetGoal) {
-                  handleGoalUpdate('budget', newBudgetGoal);
-                } else {
-                  setNewBudgetGoal(userGoals.budget_goal.toString());
-                  setIsEditingBudgetGoal(true);
-                }
-              }}
-              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded"
-            >
-              {isEditingBudgetGoal ? 'Confirm' : 'Edit'}
-            </button>
+
+        <div className="flex flex-row gap-8"> {/* Wrapper for side-by-side modules */}
+          <div className="flex flex-col gap-8"> {/* Left column for Daily Goals and Settings */}
+            {/* Daily Goals Section */}
+            <div className="bg-gray-700 p-6 rounded w-[500px]">
+              <h3 className="text-2xl mb-4">Daily Goals:</h3>
+              {!accessToken ? (
+                <p className="text-gray-400">Please authenticate with Plaid to track your goals.</p>
+              ) : (
+                <ul>
+                  <li className="flex items-center mb-2">
+                    <input type="checkbox" checked={budgetGoalMet} disabled className="mr-2 h-5 w-5 accent-green-500" />
+                    <span>Expenses under daily budget (Target: ${userGoals.budget_goal})</span>
+                  </li>
+                  <li className="flex items-center">
+                    <input type="checkbox" checked={savingsGoalMet} disabled className="mr-2 h-5 w-5 accent-green-500" />
+                    <span>Met daily savings goal (Target: ${userGoals.savings_goal})</span>
+                  </li>
+                </ul>
+              )}
+            </div>
+
+            {/* Settings Section */}
+            <div className="bg-gray-700 p-6 rounded w-[500px]">
+              <h3 className="text-2xl mb-4">Settings</h3>
+              {/* Budget Goal Setting */}
+              <div className="flex items-center mb-4">
+                <label htmlFor="budgetGoalInput" className="mr-2 text-white">Daily Budget Goal:</label>
+                <input 
+                  type="number" 
+                  id="budgetGoalInput" 
+                  value={isEditingBudgetGoal ? newBudgetGoal : userGoals.budget_goal} 
+                  onChange={(e) => setNewBudgetGoal(e.target.value)} 
+                  disabled={!isEditingBudgetGoal} 
+                  className="p-1 rounded bg-gray-600 text-white w-24 mr-2 disabled:opacity-70"
+                />
+                <button 
+                  onClick={() => {
+                    if (isEditingBudgetGoal) {
+                      handleGoalUpdate('budget', newBudgetGoal);
+                    } else {
+                      setNewBudgetGoal(userGoals.budget_goal.toString());
+                      setIsEditingBudgetGoal(true);
+                    }
+                  }}
+                  className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded"
+                >
+                  {isEditingBudgetGoal ? 'Confirm' : 'Edit'}
+                </button>
+              </div>
+
+              {/* Savings Goal Setting */}
+              <div className="flex items-center mb-4">
+                <label htmlFor="savingsGoalInput" className="mr-2 text-white">Daily Savings Goal:</label>
+                <input 
+                  type="number" 
+                  id="savingsGoalInput" 
+                  value={isEditingSavingsGoal ? newSavingsGoal : userGoals.savings_goal} 
+                  onChange={(e) => setNewSavingsGoal(e.target.value)} 
+                  disabled={!isEditingSavingsGoal} 
+                  className="p-1 rounded bg-gray-600 text-white w-24 mr-2 disabled:opacity-70"
+                />
+                <button 
+                  onClick={() => {
+                    if (isEditingSavingsGoal) {
+                      handleGoalUpdate('savings', newSavingsGoal);
+                    } else {
+                      setNewSavingsGoal(userGoals.savings_goal.toString());
+                      setIsEditingSavingsGoal(true);
+                    }
+                  }}
+                  className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded"
+                >
+                  {isEditingSavingsGoal ? 'Confirm' : 'Edit'}
+                </button>
+              </div>
+            </div>
           </div>
 
-          {/* Savings Goal Setting */}
-          <div className="flex items-center mb-4">
-            <label htmlFor="savingsGoalInput" className="mr-2 text-white">Daily Savings Goal:</label>
-            <input 
-              type="number" 
-              id="savingsGoalInput" 
-              value={isEditingSavingsGoal ? newSavingsGoal : userGoals.savings_goal} 
-              onChange={(e) => setNewSavingsGoal(e.target.value)} 
-              disabled={!isEditingSavingsGoal} 
-              className="p-1 rounded bg-gray-600 text-white w-24 mr-2 disabled:opacity-70"
-            />
-            <button 
-              onClick={() => {
-                if (isEditingSavingsGoal) {
-                  handleGoalUpdate('savings', newSavingsGoal);
-                } else {
-                  setNewSavingsGoal(userGoals.savings_goal.toString());
-                  setIsEditingSavingsGoal(true);
-                }
-              }}
-              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded"
-            >
-              {isEditingSavingsGoal ? 'Confirm' : 'Edit'}
-            </button>
+          {/* Find Friends Module (Right Column) */}
+          <div className="bg-gray-700 p-6 rounded w-[500px] flex-shrink-0">
+            <h3 className="text-2xl mb-4">Find Friends</h3>
+            <div className="flex mb-4">
+              <input 
+                type="text" 
+                placeholder="Search by username..." 
+                value={friendSearchTerm} 
+                onChange={(e) => setFriendSearchTerm(e.target.value)} 
+                className="p-2 rounded-l bg-gray-600 text-white flex-grow"
+              />
+              <button 
+                onClick={handleSearchFriends} 
+                disabled={friendsLoading}
+                className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-r disabled:opacity-50"
+              >
+                {friendsLoading ? 'Searching...' : 'Search'}
+              </button>
+            </div>
+            {friendsLoading && <p className="text-gray-400">Loading...</p>}
+            {!friendsLoading && friendSearchResults.length === 0 && friendSearchTerm && (
+              <p className="text-gray-400">No users found or already friends.</p>
+            )}
+            {!friendsLoading && friendSearchResults.length > 0 && (
+              <ul className="max-h-60 overflow-y-auto">
+                {friendSearchResults.map(user => (
+                  <li key={user.id} className="flex items-center justify-between p-2 mb-2 bg-gray-600 rounded">
+                    <span className="text-white">{user.username}</span>
+                    <button 
+                      onClick={() => handleAddFriend(user.id)} 
+                      disabled={friendsLoading || currentUserFriends.includes(user.id)}
+                      className="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-3 rounded disabled:opacity-50"
+                    >
+                      {currentUserFriends.includes(user.id) ? 'Friend' : 'Add Friend'}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
-          {/* <p className="text-gray-400">Settings content will go here.</p> */}
         </div>
       </div>
     </div>

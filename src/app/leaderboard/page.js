@@ -3,16 +3,22 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
 
 export default function LeaderboardPage() {
-  const [worldwideLongest, setWorldwideLongest] = useState([]); // New state for longest streaks
-  const [worldwideCurrent, setWorldwideCurrent] = useState([]); // New state for current streaks
-  const [friends, setFriends] = useState([]);
+  const [worldwideLongest, setWorldwideLongest] = useState([]);
+  const [worldwideCurrent, setWorldwideCurrent] = useState([]);
+  const [friendsLongest, setFriendsLongest] = useState([]); // New state for friends longest streaks
+  const [friendsCurrent, setFriendsCurrent] = useState([]); // New state for friends current streaks
   const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState(null); // State to store current user session
   
 
   useEffect(() => {
     const fetchLeaderboards = async () => {
       setLoading(true);
       try {
+        // Check for current user session
+        const { data: { session } } = await supabase.auth.getSession();
+        setCurrentUser(session?.user || null);
+
         // Fetch for Worldwide Longest Streaks
         const { data: longestData, error: longestError } = await supabase
           .from('profiles')
@@ -41,8 +47,48 @@ export default function LeaderboardPage() {
           setWorldwideCurrent(currentData || []);
         }
 
-        // Assuming friends fetching logic is separate or will be updated similarly
-        // For now, friends data fetching is not modified as per the specific issue reported.
+        // Fetch Friends Leaderboards if user is logged in
+        if (session && session.user) {
+          const userId = session.user.id;
+
+          // 1. Get friend IDs
+          const { data: friendRelations, error: friendRelationsError } = await supabase
+            .from('friends')
+            .select('friend_id')
+            .eq('user_id', userId);
+
+          if (friendRelationsError) {
+            console.error("Error fetching friend relations:", friendRelationsError);
+          } else if (friendRelations && friendRelations.length > 0) {
+            const friendIds = friendRelations.map(f => f.friend_id);
+
+            // 2. Get profiles of friends
+            const { data: friendsProfiles, error: friendsProfilesError } = await supabase
+              .from('profiles')
+              .select('username, current_streak, longest_streak')
+              .in('id', friendIds);
+            
+            if (friendsProfilesError) {
+              console.error("Error fetching friends profiles:", friendsProfilesError);
+            } else if (friendsProfiles) {
+              // Sort for Friends Longest Streaks
+              const sortedFriendsLongest = [...friendsProfiles].sort((a, b) => (b.longest_streak || 0) - (a.longest_streak || 0));
+              setFriendsLongest(sortedFriendsLongest.slice(0, 50));
+
+              // Sort for Friends Current Streaks
+              const sortedFriendsCurrent = [...friendsProfiles].sort((a, b) => (b.current_streak || 0) - (a.current_streak || 0));
+              setFriendsCurrent(sortedFriendsCurrent.slice(0, 50));
+            }
+          } else {
+            // No friends found
+            setFriendsLongest([]);
+            setFriendsCurrent([]);
+          }
+        } else {
+          // No user logged in, clear friends leaderboards
+          setFriendsLongest([]);
+          setFriendsCurrent([]);
+        }
 
       } catch (error) {
         console.error("Error fetching leaderboards:", error);
@@ -133,7 +179,11 @@ export default function LeaderboardPage() {
                 textAlign: 'center',
                 padding: '0.5rem'
               }}>TOP FRIENDS LONGEST STREAKS</div>
-              {renderEntries(friends, 1)}
+              {currentUser ? (
+                friendsLongest.length > 0 ? renderEntries(friendsLongest, 1) : <p className="p-2 text-center text-gray-500">No friends to display or add friends to see their streaks.</p>
+              ) : (
+                <p className="p-2 text-center text-gray-500">Log in to view your friends' longest streaks.</p>
+              )}
             </div>
           </section>
           <section style={{ display: 'flex', gap: '3rem' }}>
@@ -167,7 +217,11 @@ export default function LeaderboardPage() {
                 textAlign: 'center',
                 padding: '0.5rem'
               }}>TOP FRIENDS CURRENT STREAKS</div>
-              {renderEntries(friends, 0)}
+              {currentUser ? (
+                friendsCurrent.length > 0 ? renderEntries(friendsCurrent, 0) : <p className="p-2 text-center text-gray-500">No friends to display or add friends to see their streaks.</p>
+              ) : (
+                <p className="p-2 text-center text-gray-500">Log in to view your friends' current streaks.</p>
+              )}
             </div>
           </section>
         </div>
