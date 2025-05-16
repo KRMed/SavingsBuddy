@@ -3,6 +3,7 @@
 import { usePathname, useRouter } from "next/navigation"; 
 import { useState } from "react"; 
 import savingsbuddyImage from "../assets/savingsbuddy.png";
+import profile from "../assets/profile.png";
 import { supabase } from "../app/supabaseClient";
 
 const Header = () => {
@@ -82,17 +83,12 @@ const Header = () => {
                         </a>
                     </>
                 )}
-                <div
-                        onClick={togglePopup}
-                        style={{
-                            width: 40,
-                            height: 40,
-                            background: 'white',
-                            borderRadius: '50%',
-                            marginLeft: '1rem',
-                            cursor: 'pointer'
-                        }}
-                ></div>
+                <img
+                    src={profile.src}
+                    alt="Profile"
+                    style={{ width: '52px', height: '52px', borderRadius: '50%', marginLeft: '1rem', cursor: 'pointer', objectFit: 'cover', padding: 0, border: 'none' }}
+                    onClick={togglePopup}
+                />
                 {isPopupVisible && (
                     <div style={{
                         position: 'absolute',
