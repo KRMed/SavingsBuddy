@@ -17,7 +17,10 @@ const Header = () => {
     };
 
     const toggleSettingsPopup = () => {
-        setIsSettingsPopupVisible((prev) => !prev);
+        setIsSettingsPopupVisible((prev) => {
+            if (!prev) setIsPopupVisible(false); // Close the profile popup when opening settings
+            return !prev;
+        });
     };
 
     const logout = async () => {
@@ -131,11 +134,35 @@ const Header = () => {
                         right: '0',
                         background: 'white',
                         borderRadius: '8px',
+                        width: '250px',
+                        height: 'auto',
                         boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-                        padding: '1rem',
+                        padding: '0.5rem',
                         zIndex: 1000
                     }}>
-                        {/* Empty popup for now */}
+                        <a
+                            href="#"
+                            onClick={(e) => {
+                                e.preventDefault();
+                                setIsSettingsPopupVisible(false); // Close the settings popup
+                                setIsPopupVisible(true); // Ensure the main popup remains open
+                            }}
+                            style={{ display: 'block', padding: '0.5rem', color: '#153D66', textDecoration: 'none' }}
+                        >
+                            Back
+                        </a>
+                        <a
+                            href="#"
+                            style={{ display: 'block', padding: '0.5rem', color: '#153D66', textDecoration: 'none' }}
+                        >
+                            Change Password
+                        </a>
+                        <a
+                            href="#"
+                            style={{ display: 'block', padding: '0.5rem', color: '#153D66', textDecoration: 'none' }}
+                        >
+                            Change Profile Picture
+                        </a>
                     </div>
                 )}
         </div>

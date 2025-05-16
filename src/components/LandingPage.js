@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import savingsbuddyImage from "../assets/savingsbuddy.png";
+import savingsbuddyImage from "../assets/savingsbuddy_no_background.png";
 import Link from "next/link";
 
 export default function LandingPage() {
