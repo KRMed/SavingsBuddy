@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation"; 
 import { useState } from "react"; 
 import savingsbuddyImage from "../assets/savingsbuddy.png";
+import { supabase } from "../app/supabaseClient";
 
 const Header = () => {
     const pathname = usePathname();
@@ -17,6 +18,15 @@ const Header = () => {
     const toggleSettingsPopup = () => {
         setIsSettingsPopupVisible((prev) => !prev);
     };
+
+    const logout = async () => {
+        const { error } = await supabase.auth.signOut();
+        if (error) {
+          alert('Logout failed: ' + error.message);
+        } else {
+          router.push('/login');
+        }
+      };
 
     return (
         <header style={{
@@ -101,7 +111,7 @@ const Header = () => {
                         >
                             Settings
                         </a>
-                        <a href="/" style={{ display: 'block', padding: '0.5rem', color: '#CC3B2F', textDecoration: 'none' }}>Logout</a>
+                        <a href="/" style={{ display: 'block', padding: '0.5rem', color: '#CC3B2F', textDecoration: 'none' }} onClick={logout}>Logout</a>
                     </div>
                 )}
                 {isSettingsPopupVisible && (
